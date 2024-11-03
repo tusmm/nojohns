@@ -1,0 +1,14 @@
+{
+    "title": "No Johns",
+    "author": "(string) AUTHOR(s) OF YOUR GAME",
+    "summary": "(string) SUMMARY OF YOUR GAME",
+    "release_date": "YYYY-DD-MM",
+    "multiplayer": false,
+    "genres": [
+        "(string) GENRE OF YOUR GAME"
+    ],
+    "times_played": 0,
+    "last_played": 0,
+    "cover_image": "(string) .png/.jpg RELATIVE PATH TO THE COVER IMAGE OF YOUR GAME",
+    "exec": "(string) RELATIVE PATH TO THE EXECUTABLE OF YOUR GAME"
+}
