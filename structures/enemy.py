@@ -49,4 +49,3 @@ class Enemy:
         while visited[current] != Coordinate(self.x, self.y):
             current = visited[current]
         self.x, self.y = current.x, current.y 
-        print(f"Enemy moved to {self.x}, {self.y}")

@@ -102,10 +102,10 @@ def _draw_oxygen_panel(screen, oxygen_image_view, scale_image_view, oxygen):
     screen.blit(scale_image_view, scale_image_view.get_rect(center = (950, 450)))
 
 def _draw_player_indicator(screen, player_indicator_surface, player, dx, dy):
-    match player.pawns[player.pawn_index].color:
-        case "BLUE":
+    match player.pawn_index:
+        case 0:
             PLAYER_IMAGE = pygame.image.load("assets/pawns/miner1.png")
-        case "RED":
+        case 1:
             PLAYER_IMAGE = pygame.image.load("assets/pawns/miner2.png")
     
     PLAYER_IMAGE = pygame.transform.scale_by(PLAYER_IMAGE, 2)
@@ -224,7 +224,7 @@ def main():
                         first_player.rotate_pawn()
                     else:
                         second_player.rotate_pawn()
-                if event.button == 4:
+                if event.button == 3:
                     do_something_transparency = 255
             elif event.type == pygame.JOYAXISMOTION:
                 if event.joy == 0:
@@ -266,7 +266,8 @@ def main():
 
         if not pawns:
             win = True
-            running = False
+            pygame.display.flip()
+            break 
 
         pygame.display.flip()
         clock.tick(60)
