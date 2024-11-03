@@ -1,6 +1,0 @@
-Tiles:
-    Use a dictionary mapping: ID to tile content
-
-Tile content:
-aAAAInternal tile adjancency matrix:
-        def  

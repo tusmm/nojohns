@@ -224,7 +224,7 @@ def main():
                         first_player.rotate_pawn()
                     else:
                         second_player.rotate_pawn()
-                if event.button == 3:
+                if event.button == 2:
                     do_something_transparency = 255
             elif event.type == pygame.JOYAXISMOTION:
                 if event.joy == 0:
@@ -238,7 +238,7 @@ def main():
                     elif event.axis == 0 and event.value > 0.5:
                         second_player.move(Direction.EAST, board)
 
-        oxygen -= 0.05
+        oxygen -= 0.065
         if oxygen < 0:
             break
         
