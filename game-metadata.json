@@ -1,14 +1,14 @@
 {
-    "title": "No Johns",
-    "author": "(string) AUTHOR(s) OF YOUR GAME",
-    "summary": "(string) SUMMARY OF YOUR GAME",
-    "release_date": "YYYY-DD-MM",
-    "multiplayer": false,
+    "title": "Miner Issues",
+    "author": "Lucy Hu, Ryan Ong, Alex Wong, Tiger Young",
+    "summary": "Two players work together to control two in-game characters, each player sharing one half of the controls. They must cooperate to get both miners out of their cave, managing oxygen and avoiding the perils of the cavern.",
+    "release_date": "2024-03-11",
+    "multiplayer": true,
     "genres": [
-        "(string) GENRE OF YOUR GAME"
+        "Cooperative"
     ],
     "times_played": 0,
     "last_played": 0,
-    "cover_image": "(string) .png/.jpg RELATIVE PATH TO THE COVER IMAGE OF YOUR GAME",
-    "exec": "(string) RELATIVE PATH TO THE EXECUTABLE OF YOUR GAME"
+    "cover_image": "assets/pawns/miner1.png",
+    "exec": "main.py"
 }

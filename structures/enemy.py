@@ -7,7 +7,7 @@ from structures.board import Board
 from structures.direction import Direction, Coordinate
 from structures.pawn import Pawn
 
-COOLDOWN = 100 
+COOLDOWN = 1500 
 
 @dataclass
 class Enemy:
@@ -46,8 +46,7 @@ class Enemy:
                         visited[neighbor] = current
                         queue.append(neighbor)
 
-        while visited[current] != current:
+        while visited[current] != Coordinate(self.x, self.y):
             current = visited[current]
         self.x, self.y = current.x, current.y 
         print(f"Enemy moved to {self.x}, {self.y}")
-
