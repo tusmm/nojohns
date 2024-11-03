@@ -11,12 +11,12 @@ class Direction(Enum):
     def get_coordinate_offset(self):
         match self:
             case Direction.NORTH:
-                return Offset(0, -1)
+                return Coordinate(0, -1)
             case Direction.EAST:
-                return Offset(1, 0)
+                return Coordinate(1, 0)
             case Direction.SOUTH:
-                return Offset(0, 1)
+                return Coordinate(0, 1)
             case Direction.WEST:
-                return Offset(-1, 0)
+                return Coordinate(-1, 0)
 
-Offset = namedtuple('Offset', ['x', 'y'])
+Coordinate = namedtuple('Coordinate', ['x', 'y'])

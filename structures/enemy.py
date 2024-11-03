@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import pygame
 
 from structures.board import Board
-from structures.direction import Direction, Offset
+from structures.direction import Direction, Coordinate
 from structures.pawn import Pawn
 
 COOLDOWN = 100 
@@ -27,10 +27,10 @@ class Enemy:
 
     def move(self, board: Board, pawns: list[Pawn]):
         # Move the enemy towards the nearest pawn with breadth-first search
-        goals = [Offset(pawn.x, pawn.y) for pawn in pawns]
+        goals = [Coordinate(pawn.x, pawn.y) for pawn in pawns]
         queue = []
-        visited = {Offset(self.x, self.y): Offset(self.x, self.y)}
-        queue.append(Offset(self.x, self.y))
+        visited = {Coordinate(self.x, self.y): Coordinate(self.x, self.y)}
+        queue.append(Coordinate(self.x, self.y))
         
         while queue:
             current = queue.pop(0)
@@ -41,7 +41,7 @@ class Enemy:
             for direction in Direction:
                 offset = Direction.get_coordinate_offset(direction)
                 if current_cell.adjacency_matrix[direction.value] == 0:
-                    neighbor = Offset(current.x + offset.x, current.y + offset.y)
+                    neighbor = Coordinate(current.x + offset.x, current.y + offset.y)
                     if neighbor not in visited:
                         visited[neighbor] = current
                         queue.append(neighbor)
@@ -49,4 +49,5 @@ class Enemy:
         while visited[current] != current:
             current = visited[current]
         self.x, self.y = current.x, current.y 
+        print(f"Enemy moved to {self.x}, {self.y}")
 
