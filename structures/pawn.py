@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 
-import pygame
-
 from structures.board import Board, BOARD_HEIGHT, BOARD_WIDTH
 
 @dataclass
 class Pawn:
     x: int
     y: int
+    color: tuple[int, int, int]
 
     def move(self, dx, dy, direction, board, pawns):
         new_x = self.x + dx

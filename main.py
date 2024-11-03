@@ -13,6 +13,7 @@ pygame.init()
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 900  # Increased height for timer display
 CELL_SIZE = 60
+NUM_TILES = 5
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -23,14 +24,23 @@ GRAY = (192, 192, 192)
 YELLOW = (255, 255, 0)
 PURPLE = (128, 0, 128)
 
-PAWN_COLORS = (GREEN, BLUE, YELLOW, PURPLE)
-
 def _create_board(filename: str) -> Board:
     board = Board(BOARD_HEIGHT, BOARD_WIDTH, filename) 
     return board 
 
 def _create_transparencies():
-    pass
+    transparency_surfaces = []
+    transparencies = []
+    for _ in range(NUM_TILES * NUM_TILES):
+        transparencies.append(255)
+    for row in range(NUM_TILES):
+        for col in range(NUM_TILES):
+            transparency_surface = pygame.Surface((SCREEN_WIDTH // NUM_TILES, SCREEN_HEIGHT // NUM_TILES), pygame.SRCALPHA)
+            transparency_surface.fill((0,0,0,255))  # rgpA, A = 0 is transparent, A = 255 is opaque
+            transparency_surface.scroll(row * SCREEN_WIDTH // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES)
+            pygame.display.flip()
+            transparency_surfaces.append(transparency_surface)
+    return transparency_surfaces, transparencies
 
 # Draw board
 def _draw_board(screen, board):
@@ -52,10 +62,9 @@ def _draw_board(screen, board):
 def _draw_pawns(screen, pawns):
     shift = 10
     size_shift = 20
-    for index, pawn in enumerate(pawns):
-        print(index, pawn)
+    for pawn in pawns:
         pygame.draw.rect(
-            screen, PAWN_COLORS[index], 
+            screen, pawn.color, 
             ((pawn.x * CELL_SIZE) + shift, (pawn.y * CELL_SIZE) + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift)
         )
 
@@ -66,64 +75,26 @@ def main():
     clock = pygame.time.Clock()
 
     board = _create_board(None)  # Gives access to access to all cells
-    tile_size = 5
-    transparency_surfaces = []
-    transparencies = []
-    for i in range(25):
-        transparencies.append(255)
-    for row in range(tile_size):
-        for col in range(tile_size):
-            transparency_surface = pygame.Surface((SCREEN_WIDTH // tile_size,SCREEN_HEIGHT // tile_size), pygame.SRCALPHA)
-            transparency_surface.fill((0,0,0,255))  # rgpA, A = 0 is transparent, A = 255 is opaque
-            transparency_surface.scroll(row * SCREEN_WIDTH // tile_size, col * SCREEN_HEIGHT // tile_size)
-            pygame.display.flip()
-            transparency_surfaces.append(transparency_surface)
+    transparency_surfaces, transparencies = _create_transparencies()
 
-    pawns = [Pawn(6, 6), Pawn(8, 8)]
+    pawns = [Pawn(6, 6, GREEN), Pawn(8, 8, BLUE)]
     first_player = Player(0, pawns, {Direction.NORTH, Direction.SOUTH})
     second_player = Player(1, pawns, {Direction.WEST, Direction.EAST})
 
     running = True
-    won = False
+    win = False
     exit_open = False
     
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                # PLAYER 1 controls
-                # if the player is able to move in that direction, then move
-                if event.key == pygame.K_UP:
-                    first_player.move(0, -1, Direction.NORTH, board)
-                elif event.key == pygame.K_DOWN:
-                    first_player.move(0, 1, Direction.SOUTH, board)
-                # PLAYER 2 controls
-                elif event.key == pygame.K_a:
-                    second_player.move(-1, 0, Direction.WEST, board)
-                elif event.key == pygame.K_d:
-                    second_player.move(1, 0, Direction.EAST, board)
-                # SWAPS
-                elif event.key == pygame.K_k:
-                    # player1 wants to swap pawns
-                    first_player.rotate_pawn()
-                elif event.key == pygame.K_f:
-                    # player2 wants to swap pawns
-                    second_player.rotate_pawn()
-        
-        if board.cells[Board.cartesian_to_id(pawns[0].x, pawns[0].y)].objective == Objective.PRESSURE_PLATE and \
-              board.cells[Board.cartesian_to_id(pawns[1].x, pawns[1].y)].objective == Objective.PRESSURE_PLATE:
-                exit_open = True
-                print("Exit open")
-            
+        # Draw board and other elements
         screen.fill(WHITE)
         _draw_board(screen, board)
         _draw_pawns(screen, pawns)
 
         for i in range(len(transparency_surfaces)):
-            row = i // 5
-            col = i % 5
-            screen.blit(transparency_surfaces[i], (row * SCREEN_WIDTH // tile_size, col * SCREEN_HEIGHT // tile_size))
+            row = i // NUM_TILES
+            col = i % NUM_TILES
+            screen.blit(transparency_surfaces[i], (row * SCREEN_WIDTH // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES))
 
         for pawn in pawns:
             curr_x = pawn.x // 3
@@ -138,22 +109,54 @@ def main():
                 transparencies[i] = 0
             transparency_surfaces[i].fill((0,0,0,transparencies[i]))
 
-        if any(board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.EXIT for pawn in pawns):
-            won = True
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                # if the player is able to move in that direction, then move
+                match event.key: 
+                    # PLAYER 1 controls
+                    case pygame.K_UP:
+                        first_player.move(0, -1, Direction.NORTH, board)
+                    case pygame.K_DOWN:
+                        first_player.move(0, 1, Direction.SOUTH, board)
+                    # PLAYER 2 controls
+                    case pygame.K_a:
+                        second_player.move(-1, 0, Direction.WEST, board)
+                    case pygame.K_d:
+                        second_player.move(1, 0, Direction.EAST, board)
+                    case pygame.K_k:
+                        first_player.rotate_pawn()
+                    case pygame.K_f:
+                        second_player.rotate_pawn()
+        
+        # Describe game logic
+        if all(board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.PRESSURE_PLATE for pawn in pawns):
+            exit_open = True
+            print("Exit open")
+            
+        for pawn in pawns:
+            if board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.EXIT and exit_open:
+                pawns.remove(pawn)
+
+        if not pawns:
+            win = True
             running = False
 
         pygame.display.flip()
         clock.tick(30)
 
-    if won and exit_open:
-        time_text = font.render('You won!', True, BLACK)
+    if win and exit_open:
+        time_text = font.render('You won!', True, BLACK)  
     else:
         time_text = font.render('Time is up!', True, BLACK)
-    screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, SCREEN_HEIGHT // 2 - time_text.get_height() // 2))
-    pygame.display.flip()
-    pygame.time.wait(100)
-
-    pygame.quit()
+        
+        screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, SCREEN_HEIGHT // 2 - time_text.get_height() // 2))
+        pygame.time.wait(3000)
+        pygame.display.flip()
+        pygame.quit()
+    
 
 if __name__ == "__main__":
     main()
