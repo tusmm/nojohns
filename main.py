@@ -3,6 +3,7 @@ import pygame
 from structures.board import Board, BOARD_HEIGHT, BOARD_WIDTH
 from structures.cell import Cell, Objective
 from structures.direction import Direction 
+from structures.enemy import Enemy
 from structures.pawn import Pawn
 from structures.player import Player
 
@@ -10,7 +11,7 @@ from structures.player import Player
 pygame.init()
 
 # Constants
-SCREEN_WIDTH = 900
+SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 900  # Increased height for timer display
 CELL_SIZE = 60
 NUM_TILES = 5
@@ -35,12 +36,20 @@ def _create_transparencies():
         transparencies.append(255)
     for row in range(NUM_TILES):
         for col in range(NUM_TILES):
-            transparency_surface = pygame.Surface((SCREEN_WIDTH // NUM_TILES, SCREEN_HEIGHT // NUM_TILES), pygame.SRCALPHA)
-            transparency_surface.fill((0,0,0,255))  # rgpA, A = 0 is transparent, A = 255 is opaque
-            transparency_surface.scroll(row * SCREEN_WIDTH // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES)
+            width = SCREEN_WIDTH - 100
+            transparency_surface = pygame.Surface((width // NUM_TILES, SCREEN_HEIGHT // NUM_TILES), pygame.SRCALPHA)
+            transparency_surface.fill((0, 0, 0, 255))  # rgpA, A = 0 is transparent, A = 255 is opaque
+            transparency_surface.scroll(row * width // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES)
             pygame.display.flip()
             transparency_surfaces.append(transparency_surface)
     return transparency_surfaces, transparencies
+
+def _create_oxygen_panel():
+    oxygen_image_v = pygame.Surface((100, SCREEN_WIDTH - 100))
+    oxygen_image_v.fill("darkgray")
+    pygame.draw.rect(oxygen_image_v, "red", (SCREEN_WIDTH - 100, 0, 100, 10))
+    scale_image_v = pygame.Surface((100, 900))
+    return oxygen_image_v, scale_image_v
 
 # Draw board
 def _draw_board(screen, board):
@@ -49,65 +58,104 @@ def _draw_board(screen, board):
             image = Cell.get_wall_image(board.cells[Board.cartesian_to_id(x, y)].adjacency_matrix)
             screen.blit(image, (x * CELL_SIZE, y *  CELL_SIZE))
             # pygame.draw.rect(screen, GRAY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 2)
-
             match board.cells[Board.cartesian_to_id(x, y)].objective:
                 case Objective.EXIT:
-                    pygame.draw.rect(screen, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    shift = 10
+                    size_shift = 20
+                    EXIT_IMAGE = pygame.image.load("assets/objectives/exit.png")
+                    screen.blit(EXIT_IMAGE, (x * CELL_SIZE + 5, y * CELL_SIZE + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift))
                 case Objective.PRESSURE_PLATE:
-                    pygame.draw.rect(screen, GRAY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    shift = 10
+                    size_shift = 20
+                    PRESSURE_PLATE_IMAGE = pygame.image.load("assets/objectives/pressure_plate.png")
+                    screen.blit(PRESSURE_PLATE_IMAGE, (x * CELL_SIZE + shift, y * CELL_SIZE + shift + 10, CELL_SIZE, CELL_SIZE))
                 case Objective.OXYGEN_TANK:
-                    pygame.draw.rect(screen, BLUE, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    shift = 10
+                    size_shift = 20
+                    OXYGEN_IMAGE = pygame.image.load("assets/objectives/oxygen.png")
+                    screen.blit(OXYGEN_IMAGE, (x * CELL_SIZE + shift, y * CELL_SIZE + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift))
+
+def _draw_transparencies(screen, transparency_surfaces):
+    for i in range(len(transparency_surfaces)):
+        width = SCREEN_WIDTH - 100
+        row = i // NUM_TILES
+        col = i % NUM_TILES
+        screen.blit(transparency_surfaces[i], (row * width // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES))
+
+def _draw_oxygen_panel(screen, oxygen):
+    pass
 
 # Draw pawns
 def _draw_pawns(screen, pawns):
     shift = 10
     size_shift = 20
     for pawn in pawns:
-        pygame.draw.rect(
-            screen, pawn.color, 
-            ((pawn.x * CELL_SIZE) + shift, (pawn.y * CELL_SIZE) + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift)
-        )
+        IMAGE = None
+        if pawn.color == GREEN:
+            IMAGE = pygame.image.load("assets/pawns/miner1.png")
+        elif pawn.color == PURPLE:
+            IMAGE = pygame.image.load("assets/pawns/miner2.png")
+        screen.blit(IMAGE, ((pawn.x * CELL_SIZE) + shift, (pawn.y * CELL_SIZE) + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift))
+ 
+def _draw_enemy(screen, enemy):
+    shift = 10
+    size_shift = 20
+    ENEMY_IMAGE = pygame.image.load("assets/pawns/major.png")
+    screen.blit(ENEMY_IMAGE, (enemy.x * CELL_SIZE + shift, enemy.y * CELL_SIZE + shift, CELL_SIZE - size_shift, CELL_SIZE - size_shift))
 
 def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     font = pygame.font.SysFont(None, 36)
     pygame.display.set_caption("Miners (nooooo Johns)")
     clock = pygame.time.Clock()
-
+    
     board = _create_board(None)  # Gives access to access to all cells
     transparency_surfaces, transparencies = _create_transparencies()
+    oxygen_image_v, scale_image_v = _create_oxygen_panel()
+    
+    running = True
+    win = False
 
-    pawns = [Pawn(6, 6, GREEN), Pawn(8, 8, BLUE)]
+    pawns = [Pawn(6, 6, GREEN), Pawn(8, 8, PURPLE)]
     first_player = Player(0, pawns, {Direction.NORTH, Direction.SOUTH})
     second_player = Player(1, pawns, {Direction.WEST, Direction.EAST})
 
-    running = True
-    win = False
+    oxygen = 100
     exit_open = False
-    
+    enemy = Enemy(1, 8, False, -1)
+
     while running:
         # Draw board and other elements
         screen.fill(WHITE)
         _draw_board(screen, board)
         _draw_pawns(screen, pawns)
+        _draw_oxygen_panel(screen, oxygen)
+        _draw_transparencies(screen, transparency_surfaces)
+         
+        oxygen -= 0.1
+        if oxygen < 0:
+            break
 
-        for i in range(len(transparency_surfaces)):
-            row = i // NUM_TILES
-            col = i % NUM_TILES
-            screen.blit(transparency_surfaces[i], (row * SCREEN_WIDTH // NUM_TILES, col * SCREEN_HEIGHT // NUM_TILES))
+        scale_image_v.fill(GRAY)
+        h = oxygen * scale_image_v.get_height() // 100
+        y = scale_image_v.get_height() - h
+        pygame.draw.rect(scale_image_v, GREEN, (40, y, 20, h), 0, 3)
+        
+        screen.blit(oxygen_image_v, oxygen_image_v.get_rect(center = (950, 450)))
+        screen.blit(scale_image_v, scale_image_v.get_rect(center = (950, 450)))
 
         for pawn in pawns:
-            curr_x = pawn.x // 3
-            curr_y = pawn.y // 3
-            transparencies[curr_x * 5 + curr_y] -= 20
-        
+            current_x = pawn.x // 3
+            current_y = pawn.y // 3
+            transparencies[current_x * NUM_TILES + current_y] -= 20
+
         for i in range(len(transparencies)):
             transparencies[i] += 0.6
             if transparencies[i] > 255:
                 transparencies[i] = 255
             if transparencies[i] < 0:
                 transparencies[i] = 0
-            transparency_surfaces[i].fill((0,0,0,transparencies[i]))
+            transparency_surfaces[i].fill((0, 0, 0, transparencies[i]))
 
         # Handle events
         for event in pygame.event.get():
@@ -118,24 +166,36 @@ def main():
                 match event.key: 
                     # PLAYER 1 controls
                     case pygame.K_UP:
-                        first_player.move(0, -1, Direction.NORTH, board)
+                        first_player.move(Direction.NORTH, board)
                     case pygame.K_DOWN:
-                        first_player.move(0, 1, Direction.SOUTH, board)
+                        first_player.move(Direction.SOUTH, board)
                     # PLAYER 2 controls
                     case pygame.K_a:
-                        second_player.move(-1, 0, Direction.WEST, board)
+                        second_player.move(Direction.WEST, board)
                     case pygame.K_d:
-                        second_player.move(1, 0, Direction.EAST, board)
+                        second_player.move(Direction.EAST, board)
                     case pygame.K_k:
                         first_player.rotate_pawn()
                     case pygame.K_f:
                         second_player.rotate_pawn()
         
-        # Describe game logic
+        for pawn in pawns:
+            if board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.OXYGEN_TANK:
+                oxygen += 25
+                if oxygen > 100:
+                    oxygen = 100
+                board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective = Objective.EMPTY
+
         if all(board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.PRESSURE_PLATE for pawn in pawns):
             exit_open = True
-            print("Exit open")
-            
+            enemy.interact(board, pawns)
+
+        if enemy.enabled:
+            _draw_enemy(screen, enemy)
+            enemy.interact(board, pawns)
+            if any(pawn.x == enemy.x and pawn.y == enemy.y for pawn in pawns):
+                running = False
+        
         for pawn in pawns:
             if board.cells[Board.cartesian_to_id(pawn.x, pawn.y)].objective == Objective.EXIT and exit_open:
                 pawns.remove(pawn)
@@ -152,7 +212,7 @@ def main():
     else:
         time_text = font.render('Time is up!', True, BLACK)
         
-        screen.blit(time_text, (SCREEN_WIDTH // 2 - time_text.get_width() // 2, SCREEN_HEIGHT // 2 - time_text.get_height() // 2))
+        screen.blit(time_text, (SCREEN_WIDTH - 100 // 2 - time_text.get_width() // 2, SCREEN_HEIGHT // 2 - time_text.get_height() // 2))
         pygame.time.wait(3000)
         pygame.display.flip()
         pygame.quit()

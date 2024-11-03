@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import NamedTuple, Self
 
 from structures.board import Board, BOARD_HEIGHT, BOARD_WIDTH
+from structures.direction import Direction
 
 @dataclass
 class Pawn:
@@ -8,9 +10,9 @@ class Pawn:
     y: int
     color: tuple[int, int, int]
 
-    def move(self, dx, dy, direction, board, pawns):
-        new_x = self.x + dx
-        new_y = self.y + dy
+    def move(self, offset: NamedTuple, direction: Direction, board: Board, pawns: list[Self]):
+        new_x = self.x + offset.x
+        new_y = self.y + offset.y
 
         current_cell = board.cells[Board.cartesian_to_id(self.x, self.y)]
         if (0 <= new_x < BOARD_WIDTH and 0 <= new_y < BOARD_HEIGHT and 

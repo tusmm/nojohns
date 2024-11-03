@@ -12,14 +12,15 @@ class Objective(Enum):
     EXIT = 1
     PRESSURE_PLATE = 2
     OXYGEN_TANK = 3
+    ENEMY_SPAWNER = 4
 
 @dataclass
 class Cell:
     def _load_wall_images() -> dict[int, Surface]:
         images = {}
-        MAX_WALL_PERMUTATIONS = 15
+        MAX_WALL_PERMUTATIONS = 16
         for i in range(MAX_WALL_PERMUTATIONS):
-            images[i] = pygame.image.load(f"assets/walls/basic{i}.png")
+            images[i] = pygame.image.load(f"assets/tiles/final{i}.png")
         return images
     images: ClassVar[dict[int, Surface]] = _load_wall_images()
 
